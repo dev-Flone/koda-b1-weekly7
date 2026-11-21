@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/EWallet.Api/EWallet.Api.csproj" />
-    <Project Path="src/EWallet.Core/EWallet.Core.csproj" />
+    <Project Path="src/EWallet.Application/EWallet.Application.csproj" />
+    <Project Path="src/EWallet.Domain/EWallet.Domain.csproj" />
+    <Project Path="src/EWallet.Infrastructure/EWallet.Infrastructure.csproj" />
   </Folder>
 </Solution>

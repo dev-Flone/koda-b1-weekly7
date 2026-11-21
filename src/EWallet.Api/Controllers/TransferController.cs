@@ -1,12 +1,13 @@
-using EWallet.Core.Dtos.Transfer;
-using EWallet.Core.Services.Interfaces;
+
+using EWallet.Application.Dtos.Transfer;
+using EWallet.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EWallet.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TransferController(ITransferService service) : ControllerBase
+public sealed class TransferController(ITransferService service) : ControllerBase
 {
     private readonly ITransferService _service = service;
 
@@ -16,12 +17,13 @@ public class TransferController(ITransferService service) : ControllerBase
         CancellationToken cancellationToken)
     {
         var transfers = await _service.GetAllAsync(cancellationToken);
+
         return Ok(transfers);
     }
 
     [HttpGet("{id:long}", Name = "GetTransferById")]
     [ProducesResponseType(typeof(TransferResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TransferResponseDto>> GetByIdAsync(
         long id,
         CancellationToken cancellationToken)
@@ -29,7 +31,13 @@ public class TransferController(ITransferService service) : ControllerBase
         var transfer = await _service.GetByIdAsync(id, cancellationToken);
 
         if (transfer is null)
-            return NotFound();
+        {
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Transfer not found",
+                detail: $"Transfer with ID {id} was not found."
+            );
+        }
 
         return Ok(transfer);
     }
@@ -52,45 +60,18 @@ public class TransferController(ITransferService service) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<TransferResponseDto>> CreateAsync(CreateTransferRequestDto request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TransferResponseDto>> CreateAsync(
+        [FromBody] CreateTransferRequestDto request,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var created = await _service.CreateAsync(
-                request,
-                cancellationToken);
+        var created = await _service.CreateAsync(
+            request,
+            cancellationToken);
 
-            return CreatedAtRoute(
-                "GetTransferById",
-                new { id = created.TransactionId },
-                created);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "Wallet not found",
-                Detail = ex.Message
-            });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Invalid transfer request",
-                Detail = ex.Message
-            });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "Transfer could not be processed",
-                Detail = ex.Message
-            });
-        }
+        return CreatedAtRoute(
+            "GetTransferById",
+            new { id = created.TransactionId },
+            created
+        );
     }
 }

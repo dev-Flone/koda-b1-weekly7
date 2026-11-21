@@ -1,351 +1,206 @@
 
 @baseUrl = http://localhost:5224
 
-### ==============================
-### USERS
-### ==============================
+# Sesuaikan dengan ID wallet yang tersedia di database.
+@userId = 42
+@walletId = 21
+@receiverWalletId = 22
+@topUpId = 31
+@transactionId = 15
+@referenceNo = SEED-TRANSFER-001
 
-### 1. Get All Users
-GET {{baseUrl}}/api/users
+###############################################################################
+# USERS
+###############################################################################
+
+### Get all users
+GET {{baseUrl}}/api/Users
 Accept: application/json
 
-### 2. Get User By ID
-GET {{baseUrl}}/api/users/31
+### Get user by ID
+GET {{baseUrl}}/api/Users/{{userId}}
 Accept: application/json
 
-### 3. Create User
-POST {{baseUrl}}/api/users
+### Create user
+# Wallet akan dibuat otomatis oleh UserService.
+POST {{baseUrl}}/api/Users
 Content-Type: application/json
 
 {
-  "email": "dimas1@gmail.com",
-  "phone": "081234567890",
-  "fullName": "Dimas",
-  "userName": "DimasNoMercy"
+  "userName": "testuser01",
+  "fullName": "Test User",
+  "email": "testuser01@example.com",
+  "phone": "081234567890"
 }
 
-### 4. Update User
-PUT {{baseUrl}}/api/users/31
+### Update user
+PUT {{baseUrl}}/api/Users/{{userId}}
 Content-Type: application/json
 
 {
-  "email": "afif@gmail.com",
-  "phone": "081234567891",
-  "fullName": "Afif",
-  "userName": "AfifNoMercy"
+  "userName": "TestUser",
+  "fullName": "Updated Test User",
+  "email": "TestUser@example.com",
+  "phone": "081231237891"
 }
 
+### Suspend user (soft delete)
+# Hati-hati: user akan berubah menjadi SUSPENDED.
+DELETE {{baseUrl}}/api/Users/{{userId}}
+Accept: application/json
 
-### ==============================
-### WALLETS
-### ==============================
+###############################################################################
+# WALLETS
+###############################################################################
 
-### Get All Wallet
+### Get all wallets
 GET {{baseUrl}}/api/wallets
 Accept: application/json
 
-### Get By UserId
-GET {{baseUrl}}/api/wallets/users/21
+### Get wallet by ID
+GET {{baseUrl}}/api/wallets/{{walletId}}
 Accept: application/json
 
-### Update Status
-PATCH  {{baseUrl}}/api/wallets/31/status
-Content-Type: application/json
-
-{
-  "status": "FROZEN"
-}
-
-### Get By Status
-GET {{baseUrl}}/api/wallets/status/frozen
+### Get wallet by user ID
+GET {{baseUrl}}/api/wallets/users/{{userId}}
 Accept: application/json
 
-### Get By WalletNumber
+### Get wallet by wallet number
 GET {{baseUrl}}/api/wallets/number/WLT-2159775
 Accept: application/json
 
-### 5. Get Wallet By User ID
-GET {{baseUrl}}/api/wallets/31
+### Get wallets by status
+# Valid values: ACTIVE, FROZEN, CLOSED
+GET {{baseUrl}}/api/wallets/status/ACTIVE
 Accept: application/json
 
-
-### ======================
-### TOPUP
-### =====================
-
-### Top Up Wallet
-POST {{baseUrl}}/api/topup/
+### Update wallet status
+# Valid values: ACTIVE, FROZEN, CLOSED
+PATCH {{baseUrl}}/api/wallets/{{walletId}}/status
 Content-Type: application/json
 
 {
-  "walletId": "22",
-  "amount": 1000000,
-  "paymentMethodId": 1,
-  "description": "Top up via HTTP request"
+  "status": "ACTIVE"
 }
 
-### Get By Id
-GET {{baseUrl}}/api/topup/7
+###############################################################################
+# TOP UPS
+###############################################################################
+
+### Get all top-ups
+GET {{baseUrl}}/api/TopUp
 Accept: application/json
 
-### Get All TopUp Requests
-GET {{baseUrl}}/api/topup
+### Get top-up by ID
+GET {{baseUrl}}/api/TopUp/{{topUpId}}
 Accept: application/json
 
-### Get By WalletId
-GET {{baseUrl}}/api/topup/wallet/22
+### Get top-ups by wallet ID
+GET {{baseUrl}}/api/TopUp/wallet/{{walletId}}
 Accept: application/json
 
-### 7. Top Up - Invalid Amount
-POST {{baseUrl}}/api/topup
+### Create top-up
+# PaymentMethodId valid: 0 or 1.
+# Top-up akan dibuat dengan status PENDING.
+POST {{baseUrl}}/api/TopUp
 Content-Type: application/json
 
 {
-  "amount": 0,
-  "description": "Invalid top up"
+  "walletId": {{walletId}},
+  "paymentMethodId": 0,
+  "amount": 100000
 }
 
+### Confirm Top Up (Manual Payment Verification)
+POST {{baseUrl}}/api/topup/20/confirm
 
-### ==============================
-### TRANSACTIONS
-### ==============================
+###############################################################################
+# TRANSFERS
+###############################################################################
 
-### Get All transactions
-GET {{baseUrl}}/api/transaction
+### Get all transfers
+GET {{baseUrl}}/api/Transfer
 Accept: application/json
 
-### Get By Id
-GET {{baseUrl}}/api/transaction/16
+### Get transfer by transaction ID
+GET {{baseUrl}}/api/Transfer/{{transactionId}}
 Accept: application/json
 
-### Get By Reference Number
-GET {{baseUrl}}/api/transaction/reference/SEED-TOPUP-001
+### Get transfers by wallet ID
+GET {{baseUrl}}/api/Transfer/wallet/{{walletId}}
 Accept: application/json
 
-### Get By WalletId
-GET {{baseUrl}}/api/transaction/wallet/21
-Accept: application/json
-
-### Get By Status
-GET {{baseUrl}}/api/transaction/status/success
-Accept: application/json
-
-### Get By Type
-GET {{baseUrl}}/api/transaction/type/transfer
-Accept: application/json
-
-### ===========================
-### TRANSFER
-### ===========================
-### 4. Create New Transfer
-POST {{baseUrl}}/api/transfer/
-Content-Type: application/json
-Accept: application/json
-
-{
-  "senderWalletId": 21,
-  "receiverWalletId": 31,
-  "amount": 50000,
-  "description": "Pembayaran makan siang"
-}
-
-
-
-### Transfer
-GET {{baseUrl}}/api/transfer/
-Accept: application/json
-
-###
-POST {{baseUrl}}/api/transfers
-Content-Type: application/json
-Accept: application/json
-
-{
-  "senderWalletId": 21,
-  "receiverWalletId": 31,
-  "amount": 50000,
-  "description": "Transfer to Budi"
-}
-
-### Transfer - Insufficient Balance
-POST {{baseUrl}}/api/transfers
+### Create transfer
+# Amount minimum: 10000.
+# Transfer langsung mengubah saldo kedua wallet.
+POST {{baseUrl}}/api/Transfer
 Content-Type: application/json
 
 {
-  "senderUserId": 1,
-  "receiverUserId": 2,
-  "amount": 999999999,
-  "description": "Insufficient balance test"
+  "senderWalletId": {{walletId}},
+  "receiverWalletId": {{receiverWalletId}},
+  "amount": 25000,
+  "description": "HTTP API transfer test"
 }
 
-### Transfer - Invalid Amount
-POST {{baseUrl}}/api/transfers
-Content-Type: application/json
+###############################################################################
+# TRANSACTIONS
+###############################################################################
 
-{
-  "senderUserId": 1,
-  "receiverUserId": 2,
-  "amount": -10000,
-  "description": "Invalid amount test"
-}
-
-### Get User Transaction History
-GET {{baseUrl}}/api/users/2/transactions
+### Get all transactions
+GET {{baseUrl}}/api/Transaction
 Accept: application/json
 
-### Get All Wallet Mutations
-GET {{baseUrl}}/api/WalletMutation
+### Get transaction by ID
+GET {{baseUrl}}/api/Transaction/{{transactionId}}
 Accept: application/json
 
-### Get Wallet Mutation By Id
-GET {{baseUrl}}/api/WalletMutation/1
+### Get transaction by reference number
+GET {{baseUrl}}/api/Transaction/reference/{{referenceNo}}
 Accept: application/json
 
-### Get Wallet Mutations By Wallet Id
-GET {{baseUrl}}/api/WalletMutation/wallet/1
+### Get transactions by wallet ID
+GET {{baseUrl}}/api/Transaction/wallet/{{walletId}}
 Accept: application/json
 
-### Get Wallet Mutations By Transaction Id
-GET {{baseUrl}}/api/WalletMutation/transaction/1
+### Get transactions by status
+# Valid values depend on TransactionStatus enum.
+GET {{baseUrl}}/api/Transaction/status/SUCCESS
 Accept: application/json
 
-### Get Wallet Mutations By Direction IN
-GET {{baseUrl}}/api/WalletMutation/direction/IN
+### Get transactions by type
+# Valid values depend on TransactionType enum.
+GET {{baseUrl}}/api/Transaction/type/TRANSFER
 Accept: application/json
 
-### Get Wallet Mutations By Direction OUT
-GET {{baseUrl}}/api/WalletMutation/direction/OUT
+### Transaction history - default pagination
+GET {{baseUrl}}/api/Transaction/history
 Accept: application/json
 
-### Get All Payment Methods
-GET {{baseUrl}}/api/PaymentMethod
+### Transaction history - pagination
+GET {{baseUrl}}/api/Transaction/history?page=1&pageSize=5
 Accept: application/json
 
-### Get Active Payment Methods
-GET {{baseUrl}}/api/PaymentMethod/active
+### Transaction history - search
+GET {{baseUrl}}/api/Transaction/history?search=SEED
 Accept: application/json
 
-### Get Payment Method By Id - Bank Transfer
-GET {{baseUrl}}/api/PaymentMethod/0
+### Transaction history - filter by type
+GET {{baseUrl}}/api/Transaction/history?type=TOPUP&status=PENDING
 Accept: application/json
 
-### Get Payment Method By Id - QRIS
-GET {{baseUrl}}/api/PaymentMethod/1
+### Transaction history - filter by status
+GET {{baseUrl}}/api/Transaction/history?status=SUCCESS
 Accept: application/json
 
-### Get Payment Method By Code - Bank Transfer
-GET {{baseUrl}}/api/PaymentMethod/code/BANK_TRANSFER
+### Transaction history - date range
+GET {{baseUrl}}/api/Transaction/history?startDate=2026-11-01&endDate=2026-11-21
 Accept: application/json
 
-### Get Payment Method By Code - QRIS
-GET {{baseUrl}}/api/PaymentMethod/code/QRIS
+### Transaction history - sorting
+GET {{baseUrl}}/api/Transaction/history?sortBy=createdAtUtc&sortOrder=asc
 Accept: application/json
 
-
-### Get All Audit Logs
-GET {{baseUrl}}/api/AuditLog
+### Transaction history - combined filters
+GET {{baseUrl}}/api/Transaction/history?page=1&pageSize=10&type=TRANSFER&status=SUCCESS&sortBy=createdAtUtc&sortOrder=desc
 Accept: application/json
-
-### Get Audit Log By Id
-GET {{baseUrl}}/api/AuditLog/1
-Accept: application/json
-
-### Get Audit Logs By User Id
-GET {{baseUrl}}/api/AuditLog/user/21
-Accept: application/json
-
-### Get Audit Logs By Transaction Id
-GET {{baseUrl}}/api/AuditLog/transaction/13
-Accept: application/json
-
-### Get Audit Logs By Action
-GET {{baseUrl}}/api/AuditLog/action/TRANSFER_CREATED
-Accept: application/json
-
-### Get Audit Logs By Entity Type
-GET {{baseUrl}}/api/AuditLog/entity-type/transaction
-Accept: application/json
-
-### Get Audit Logs By Outcome
-GET {{baseUrl}}/api/AuditLog/outcome/SUCCESS
-Accept: application/json
-
-### Get Transaction History
-GET {{baseUrl}}/api/transaction/history
-Accept: application/json
-
-### Search by Reference Number
-GET {{baseUrl}}/api/transaction/history?search=TRX
-Accept: application/json
-
-### Filter by Type
-GET {{baseUrl}}/api/transaction/history?type=TRANSFER
-Accept: application/json
-
-### Filter by Status
-GET {{baseUrl}}/api/transaction/history?status=SUCCESS
-Accept: application/json
-
-### Pagination
-GET {{baseUrl}}/api/transaction/history?page=1&pageSize=5
-Accept: application/json
-
-### Sorting by Amount
-GET {{baseUrl}}/api/transaction/history?sortBy=amount&sortOrder=asc
-Accept: application/json
-
-### Filter by Date Range
-GET {{baseUrl}}/api/transaction/history?startDate=2026-11-01&endDate=2026-11-18
-Accept: application/json
-
-
-
-
-### Test 1 - Get All
-GET {{baseUrl}}/api/AuditLog
-Accept: application/json
-
-### Test 2 - Get By ID
-GET {{baseUrl}}/api/AuditLog/4
-Accept: application/json
-
-### Test 3 - Get By Action
-GET {{baseUrl}}/api/AuditLog/action/TRANSFER_CREATED
-Accept: application/json
-
-
-### 1. Get All Transfers
-GET {{baseUrl}}
-Accept: application/json
-
-
-
-### 1. Get All Transfers
-GET {{baseUrl}}/api/transfer
-Accept: application/json
-
-###
-
-### 2. Get Transfer by ID
-GET {{baseUrl}}/api/transfer/15
-Accept: application/json
-
-###
-
-### 3. Get Transfers by Wallet ID
-GET {{baseUrl}}/api/transfer/wallet/21
-Accept: application/json
-
-###
-
-### 4. Create New Transfer
-POST {{baseUrl}}/api/transfer/
-Content-Type: application/json
-Accept: application/json
-
-{
-  "fromWalletId": 21,
-  "toWalletId": 31,
-  "amount": 50000,
-  "description": "Pembayaran makan siang"
-}

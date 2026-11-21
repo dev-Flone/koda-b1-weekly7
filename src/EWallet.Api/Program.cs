@@ -1,41 +1,33 @@
+
 using System.Text.Json.Serialization;
 using EWallet.Api.Handlers;
-using EWallet.Core.DepedencyInjection;
-using EWallet.Core.Services;
-using EWallet.Core.Services.Interfaces;
+using EWallet.Application;
+using EWallet.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter()));
 
-// Swagger ApiDocs
+// Swagger
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddControllers();
+// Dependency Injection
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
 
-// EF-Core Connection and Seeding
-builder.Services.AddCorePersistence(builder.Configuration);
-
-// Handler
+// Exception Handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-// Services
-builder.Services.AddServices();
-
-// Repositories
-builder.Services.AddRepositories();
-
-// Random Wallet Number Generator
-builder.Services.AddSingleton<IWalletNumberGenerator, WalletNumberGenerator>();
-
 var app = builder.Build();
 
-// Database initialization
-// To Actually run the SeedData
+// Database Migration and Seeding
 await app.Services.MigrateDbAsync();
 
-// Configure the HTTP request pipeline.
+// HTTP Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -43,9 +35,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
-
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 app.MapControllers();

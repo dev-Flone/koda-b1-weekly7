@@ -1,96 +1,118 @@
-using EWallet.Core.Dtos.Transactions;
-using EWallet.Core.Enums;
-using EWallet.Core.Services.Interfaces;
+
+using EWallet.Application.Dtos.Transactions;
+using EWallet.Application.Services.Interfaces;
+using EWallet.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EWallet.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TransactionController(ITransactionService service) : ControllerBase
+public sealed class TransactionController(ITransactionService service) : ControllerBase
 {
     private readonly ITransactionService _service = service;
 
     [HttpGet]
-    [ProducesResponseType(typeof(TransactionResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<List<TransactionResponseDto>>> GetAllAsync(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(List<TransactionResponseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<TransactionResponseDto>>> GetAllAsync(
+        CancellationToken cancellationToken)
     {
-        var transaction = await _service.GetAllAsync(cancellationToken);
+        var transactions = await _service.GetAllAsync(cancellationToken);
 
-        if (transaction.Count <= 0) return Problem("There is no transactions");
-        return Ok(transaction);
+        return Ok(transactions);
     }
 
     [HttpGet("{id:long}")]
     [ProducesResponseType(typeof(TransactionResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<TransactionResponseDto>> GetByIdAsync(long id, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TransactionResponseDto>> GetByIdAsync(
+        long id,
+        CancellationToken cancellationToken)
     {
-        var transaction = await _service.GetByIdAsync(id, cancellationToken);
+        var transaction = await _service.GetByIdAsync(
+            id,
+            cancellationToken);
 
-        return transaction is null ? Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: $"Transaction with ID {id} is not found"
-        ) : Ok(transaction);
+        if (transaction is null)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Transaction not found",
+                detail: $"Transaction with ID {id} was not found."
+            );
+        }
+
+        return Ok(transaction);
     }
 
     [HttpGet("reference/{referenceNo}")]
     [ProducesResponseType(typeof(TransactionResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TransactionResponseDto>> GetByReferenceAsync(string referenceNo, CancellationToken cancellationToken)
+    public async Task<ActionResult<TransactionResponseDto>> GetByReferenceAsync(
+        string referenceNo,
+        CancellationToken cancellationToken)
     {
-        var transaction = await _service.GetByReferenceNoAsync(referenceNo, cancellationToken);
+        var transaction = await _service.GetByReferenceNoAsync(
+            referenceNo,
+            cancellationToken);
 
-        return transaction is null ? Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: $"Transaction with Reference Number {referenceNo} is not found"
-        ) : Ok(transaction);
+        if (transaction is null)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Transaction not found",
+                detail: $"Transaction with reference number {referenceNo} was not found."
+            );
+        }
+
+        return Ok(transaction);
     }
 
-    [HttpGet("wallet/{walletId}")]
-    [ProducesResponseType(typeof(TransactionResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TransactionResponseDto>> GetByWalletIdAsync(long walletId, CancellationToken cancellationToken)
+    [HttpGet("wallet/{walletId:long}")]
+    [ProducesResponseType(typeof(List<TransactionResponseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<TransactionResponseDto>>> GetByWalletIdAsync(
+        long walletId,
+        CancellationToken cancellationToken)
     {
-        var transaction = await _service.GetByWalletIdAsync(walletId, cancellationToken);
+        var transactions = await _service.GetByWalletIdAsync(
+            walletId,
+            cancellationToken);
 
-        return transaction is null ? Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: $"Wallet with ID {walletId} not found."
-        ) : Ok(transaction);
+        return Ok(transactions);
     }
 
     [HttpGet("status/{status}")]
-    [ProducesResponseType(typeof(TransactionResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<TransactionResponseDto>>> GetByStatusAsync(TransactionStatus status, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(List<TransactionResponseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<TransactionResponseDto>>> GetByStatusAsync(
+        TransactionStatus status,
+        CancellationToken cancellationToken)
     {
-        var transaction = await _service.GetByStatusAsync(status, cancellationToken);
+        var transactions = await _service.GetByStatusAsync(
+            status,
+            cancellationToken);
 
-        return transaction is null ? Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: $"Wallet with status {status} not found."
-        ) : Ok(transaction);
+        return Ok(transactions);
     }
 
     [HttpGet("type/{type}")]
-    [ProducesResponseType(typeof(TransactionResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<TransactionResponseDto>>> GetByTypeAsync(TransactionType type, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(List<TransactionResponseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<TransactionResponseDto>>> GetByTypeAsync(
+        TransactionType type,
+        CancellationToken cancellationToken)
     {
-        var transaction = await _service.GetByTypeAsync(type, cancellationToken);
+        var transactions = await _service.GetByTypeAsync(
+            type,
+            cancellationToken);
 
-        return transaction is null ? Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: $"Wallet with type {type} not found."
-        ) : Ok(transaction);
+        return Ok(transactions);
     }
 
     [HttpGet("history")]
-    public async Task<IActionResult> GetHistory(
-    [FromQuery] TransactionQueryDto query,
-    CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetHistoryAsync(
+        [FromQuery] TransactionQueryDto query,
+        CancellationToken cancellationToken)
     {
         var result = await _service.GetHistoryAsync(
             query,

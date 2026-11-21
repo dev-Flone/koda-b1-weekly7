@@ -1,5 +1,5 @@
-using EWallet.Core.Enums;
-using EWallet.Core.Services.Interfaces;
+using EWallet.Domain.Enums;
+using EWallet.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EWallet.Api.Controllers;
@@ -96,3 +96,5 @@ public sealed class AuditLogController(IAuditLogService auditLogService) : Contr
         return Ok(result);
     }
 }
+
+

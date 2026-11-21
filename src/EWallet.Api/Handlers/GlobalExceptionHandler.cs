@@ -1,6 +1,7 @@
+
+using EWallet.Domain.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using EWallet.Core.Exceptions;
 
 namespace EWallet.Api.Handlers;
 
@@ -13,22 +14,17 @@ public sealed class GlobalExceptionHandler(
         Exception exception,
         CancellationToken cancellationToken)
     {
-        logger.LogError(
-            exception,
-            "An unhandled exception occurred."
-        );
-
         var (statusCode, title, detail) = exception switch
         {
-            ArgumentException => (
-                StatusCodes.Status400BadRequest,
-                "Bad Request",
+            KeyNotFoundException => (
+                StatusCodes.Status404NotFound,
+                "Resource Not Found",
                 exception.Message
             ),
 
-            InvalidOperationException => (
-                StatusCodes.Status409Conflict,
-                "Conflict",
+            ArgumentException => (
+                StatusCodes.Status400BadRequest,
+                "Bad Request",
                 exception.Message
             ),
 
@@ -38,12 +34,34 @@ public sealed class GlobalExceptionHandler(
                 exception.Message
             ),
 
+            InvalidOperationException => (
+                StatusCodes.Status409Conflict,
+                "Conflict",
+                exception.Message
+            ),
+
             _ => (
                 StatusCodes.Status500InternalServerError,
                 "Internal Server Error",
                 "An unexpected error occurred."
             )
         };
+
+        if (statusCode >= 500)
+        {
+            logger.LogError(
+                exception,
+                "An unhandled exception occurred."
+            );
+        }
+        else
+        {
+            logger.LogWarning(
+                exception,
+                "A request failed with status code {StatusCode}.",
+                statusCode
+            );
+        }
 
         httpContext.Response.StatusCode = statusCode;
 
