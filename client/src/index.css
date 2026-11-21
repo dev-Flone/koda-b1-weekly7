@@ -1,1 +1,289 @@
 @import "tailwindcss";
+
+/* ========================================
+   DESIGN TOKENS (@theme untuk Tailwind v4)
+======================================== */
+
+@theme {
+  --font-sans: Inter, Arial, sans-serif;
+
+  --color-primary: #136c63;
+  --color-primary-dark: #1d2928;
+  --color-background: #f5f7f6;
+  --color-surface: #ffffff;
+
+  --color-text: #1d2928;
+  --color-muted: #71807e;
+  --color-border: #e9eeeb;
+
+  --color-success: #25845b;
+
+  --radius-card: 12px;
+  --radius-button: 7px;
+
+  --spacing-sidebar: 244px;
+}
+
+/* ========================================
+   BASE STYLES
+======================================== */
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  body {
+    @apply m-0 min-w-5xl min-h-screen bg-background text-text font-sans text-[13px];
+  }
+
+  button,
+  a {
+    font: inherit;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+}
+
+/* ========================================
+   MAIN LAYOUT
+======================================== */
+
+.app-layout {
+  @apply flex min-h-screen;
+}
+
+.main-content {
+  @apply flex-1 min-w-0 py-8 px-10 min-[1440px]:py-10 min-[1440px]:px-12;
+}
+
+/* ========================================
+   SIDEBAR
+======================================== */
+
+.sidebar {
+  @apply w-sidebar min-w-sidebar min-h-screen bg-surface flex flex-col py-5.5 px-4;
+}
+
+.brand {
+  @apply flex items-center gap-2.25 px-1 pb-7.5 text-text text-base font-semibold tracking-[-0.5px];
+}
+
+.brand strong {
+  @apply font-extrabold;
+}
+
+.brand-logo {
+  @apply size-9 rounded-[11px] grid place-items-center bg-primary text-white text-2xl font-bold;
+}
+
+.sidebar-label {
+  @apply mt-0 mr-0 mb-3 ml-1.25 text-muted text-[10px] font-semibold tracking-[0.3px];
+}
+
+.sidebar-nav {
+  @apply flex flex-col gap-1.25;
+}
+
+.nav-item {
+  @apply flex items-center gap-2.75 min-h-9.5 px-2.5 rounded-button text-[#71807E] text-xs no-underline transition-colors duration-200 ease-in-out hover:bg-[#f1f6f4] hover:text-primary;
+}
+
+.nav-item.active {
+  @apply bg-[#EFF5F2] text-primary font-bold;
+}
+
+.nav-label {
+  @apply font-semibold text-[14px];
+}
+
+.sidebar-help {
+  @apply mt-auto py-3.75 px-3 rounded-[9px] bg-[#EFF5F2];
+}
+
+.help-label {
+  @apply block mb-1.75 text-muted text-[10px] font-semibold;
+}
+
+.sidebar-help strong {
+  @apply block mb-1.25 text-[15px] text-[#1D2928];
+}
+
+.sidebar-help p {
+  @apply m-0 text-muted text-[11px];
+}
+
+/* ========================================
+   HEADER
+======================================== */
+
+.dashboard-header {
+  @apply flex justify-between items-start mb-7;
+}
+
+.eyebrow {
+  @apply block mb-1.75 text-primary text-[11px] font-semibold;
+}
+
+.page-heading h1 {
+  @apply mt-0 mr-0 mb-1.75 text-[30px] font-bold text-[#1D2928];
+}
+
+.page-heading p {
+  @apply m-0 text-muted text-[13px];
+}
+
+.page-heading p span {
+  @apply mx-1;
+}
+
+.profile-button {
+  @apply flex items-center gap-2 py-1.25 pr-3 pl-1.25 border border-border rounded-[30px] bg-white text-text text-[11px];
+}
+
+.profile-avatar {
+  @apply size-6.5 grid place-items-center rounded-full bg-primary text-white text-[10px] font-bold;
+}
+
+.profile-name {
+  @apply pr-5 text-[13px] font-semibold;
+}
+/* ========================================
+   DASHBOARD OVERVIEW
+======================================== */
+
+.dashboard-overview {
+  @apply grid grid-cols-[2fr_1fr] gap-4 mb-5;
+}
+
+.balance-card {
+  @apply min-h-47.5 py-6.25 px-7 rounded-card bg-primary text-white flex flex-col items-start;
+}
+
+.card-eyebrow {
+  @apply mb-4.75 text-[12px] font-semibold;
+}
+
+.balance-card h2 {
+  @apply mt-0 mr-0 mb-4.75 text-[42px] font-bold;
+}
+
+.wallet-number {
+  @apply flex gap-2 mb-3.75 text-surface text-[14px];
+}
+
+.account-status {
+  @apply flex items-center gap-1.5 py-1.25 px-3 border-none rounded-[20px] bg-white text-primary text-[12px] font-bold;
+}
+
+/* ========================================
+   QUICK ACTIONS
+======================================== */
+
+.card {
+  @apply rounded-card bg-surface;
+}
+
+.quick-actions {
+  @apply py-6.25 px-5.5;
+}
+
+.quick-actions h2,
+.section-heading h2 {
+  @apply mt-0 mr-0 mb-1.5 text-base font-bold text-[20px];
+}
+
+.quick-actions p,
+.section-heading p {
+  @apply m-0 text-muted text-[12px];
+}
+
+.quick-action-buttons {
+  @apply flex flex-col gap-2.5 mt-5.5;
+}
+
+.action-button {
+  @apply min-h-9.75 flex items-center gap-2.25 px-3.25 border-none rounded-button text-left text-[11px] font-semibold;
+}
+
+.action-button.primary {
+  @apply bg-primary text-white hover:bg-primary-dark;
+}
+
+.action-button.secondary {
+  @apply bg-[#edf4f1] text-primary hover:bg-[#e2efea];
+}
+
+/* ========================================
+   RECENT TRANSACTIONS
+======================================== */
+
+.transactions-card {
+  @apply py-6.25 px-7;
+}
+
+.section-heading {
+  @apply flex items-center justify-between mb-5;
+}
+
+.section-heading h2 {
+  @apply text-text text-[21px] font-semibold;
+}
+
+.section-heading p {
+  @apply text-muted text-[12px];
+}
+
+.section-heading a {
+  @apply text-primary text-[13px] font-semibold no-underline hover:underline;
+}
+
+.section-heading a span {
+  @apply ml-1;
+}
+
+.transaction-table-wrapper {
+  @apply w-full;
+}
+
+.transaction-table {
+  @apply w-full border-collapse text-left;
+}
+
+.transaction-table th {
+  @apply py-3 px-2.5 border-y border-border text-muted text-[9px] font-semibold tracking-[0.3px];
+}
+
+.transaction-table td {
+  @apply py-4 px-2.5 border-b border-border text-[11px];
+}
+
+.transaction-table tbody tr:last-child td {
+  @apply border-b-0;
+}
+
+.transaction-table td:first-child {
+  @apply min-w-60;
+}
+
+.transaction-table td strong {
+  @apply block mb-1.25 font-semibold;
+}
+
+.transaction-date {
+  @apply block text-muted text-[11px];
+}
+
+.transaction-type {
+  @apply text-muted text-[12px];
+}
+
+.transaction-amount {
+  @apply whitespace-nowrap font-semibold text-[14px] text-primary-dark;
+}
+
+.transaction-status {
+  @apply text-[#257C54] font-semibold text-[12px];
+}

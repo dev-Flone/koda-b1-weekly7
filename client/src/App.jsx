@@ -1,9 +1,9 @@
-import LoginPage from "./components/LoginPage";
+import Dashboard from "./pages/DashboardPage";
 
 const App = () => {
   return (
-    <main>
-      <LoginPage />
+    <main className="flex gap-4">
+      <Dashboard />
     </main>
   );
 };
