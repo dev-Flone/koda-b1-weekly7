@@ -8,11 +8,13 @@ import RecentTransactions from "../features/transactions/RecentTransactions";
 
 import { getWalletById } from "../services/walletService";
 import { getTransactionsByWalletId } from "../services/transactionService";
+import { getUserById } from "../services/userService";
 
 const DashboardPage = () => {
   // Sementara untuk pengujian, sebelum authentication dibuat.
   const walletId = 21;
 
+  const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [transactions, setTransactions] = useState([]);
 
@@ -32,8 +34,11 @@ const DashboardPage = () => {
           getTransactionsByWalletId(walletId),
         ]);
 
+        const userData = await getUserById(walletData.userId);
+
         if (!isMounted) return;
 
+        setUser(userData);
         setWallet(walletData);
         setTransactions(transactionData);
       } catch (err) {
@@ -59,7 +64,7 @@ const DashboardPage = () => {
       <Sidebar />
 
       <main className="main-content">
-        <Header />
+        <Header user={user} />
 
         {loading ? (
           <p className="text-muted text-xs">Memuat dashboard...</p>

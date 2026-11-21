@@ -29,12 +29,20 @@
 ======================================== */
 
 @layer base {
-  * {
-    @apply box-border;
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
 
   body {
-    @apply m-0 min-w-5xl min-h-screen bg-background text-text font-sans text-[13px];
+    margin: 0;
+    min-width: 1024px; /* setara min-w-5xl */
+    min-height: 100vh;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 13px;
   }
 
   button,
@@ -43,7 +51,7 @@
   }
 
   button {
-    @apply cursor-pointer;
+    cursor: pointer;
   }
 }
 
@@ -192,12 +200,12 @@
 
 .quick-actions h2,
 .section-heading h2 {
-  @apply mt-0 mr-0 mb-1.5 text-base font-bold text-[20px];
+  @apply mt-0 mr-0 mb-1.5 font-bold text-[20px];
 }
 
 .quick-actions p,
 .section-heading p {
-  @apply m-0 text-muted text-[12px];
+  @apply m-0 text-[12px];
 }
 
 .quick-action-buttons {
