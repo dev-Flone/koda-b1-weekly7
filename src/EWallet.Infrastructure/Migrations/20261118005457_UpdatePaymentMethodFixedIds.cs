@@ -19,35 +19,66 @@ namespace EWallet.Infrastructure.Persistence.Migrations
             ALTER TABLE dbo.TopUpRequests
             DROP CONSTRAINT FK_TopUpRequests_PaymentMethods_PaymentMethodId;
 
-            -- 2. Pastikan hanya ada dua payment method yang diharapkan.
-            IF EXISTS (
-                SELECT 1
-                FROM dbo.PaymentMethods
-                WHERE Code NOT IN ('BANK_TRANSFER', 'QRIS')
-            )
-            BEGIN
-                THROW 51000, 'Unexpected payment method found.', 1;
-            END;
+            -- 2. Periksa kondisi data payment method.
+            DECLARE @PaymentMethodCount int;
 
-            IF (
-                SELECT COUNT(*)
-                FROM dbo.PaymentMethods
-                WHERE Code IN ('BANK_TRANSFER', 'QRIS')
-            ) <> 2
-            BEGIN
-                THROW 51001, 'Expected payment methods are missing.', 1;
-            END;
+            SELECT @PaymentMethodCount = COUNT(*)
+            FROM dbo.PaymentMethods;
 
-            -- 3. Pindahkan referensi TopUpRequest.
-            UPDATE tr
-            SET PaymentMethodId =
-                CASE pm.Code
-                    WHEN 'BANK_TRANSFER' THEN 0
-                    WHEN 'QRIS' THEN 1
-                END
-            FROM dbo.TopUpRequests tr
-            INNER JOIN dbo.PaymentMethods pm
-                ON tr.PaymentMethodId = pm.Id;
+            -- Jika tabel tidak kosong, validasi data lama.
+            IF @PaymentMethodCount > 0
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM dbo.PaymentMethods
+                    WHERE Code NOT IN ('BANK_TRANSFER', 'QRIS')
+                )
+                BEGIN
+                    THROW 51000, 'Unexpected payment method found.', 1;
+                END;
+
+                IF @PaymentMethodCount <> 2
+                BEGIN
+                    THROW 51001, 'Expected payment methods are missing.', 1;
+                END;
+
+                -- Pastikan kedua payment method memang tersedia.
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM dbo.PaymentMethods
+                    WHERE Code = 'BANK_TRANSFER'
+                )
+                OR NOT EXISTS (
+                    SELECT 1
+                    FROM dbo.PaymentMethods
+                    WHERE Code = 'QRIS'
+                )
+                BEGIN
+                    THROW 51001, 'Expected payment methods are missing.', 1;
+                END;
+
+                -- 3. Pindahkan referensi TopUpRequest.
+                UPDATE tr
+                SET PaymentMethodId =
+                    CASE pm.Code
+                        WHEN 'BANK_TRANSFER' THEN 0
+                        WHEN 'QRIS' THEN 1
+                    END
+                FROM dbo.TopUpRequests tr
+                INNER JOIN dbo.PaymentMethods pm
+                    ON tr.PaymentMethodId = pm.Id;
+            END
+            ELSE
+            BEGIN
+                -- Database fresh seharusnya belum memiliki TopUpRequest.
+                IF EXISTS (
+                    SELECT 1
+                    FROM dbo.TopUpRequests
+                )
+                BEGIN
+                    THROW 51002, 'TopUpRequests exist without payment methods.', 1;
+                END;
+            END;
 
             -- 4. Hapus tabel lama yang menggunakan IDENTITY.
             DROP TABLE dbo.PaymentMethods;

@@ -1,9 +1,13 @@
-
 using EWallet.Application.Abstractions.Persistence;
 using EWallet.Application.Repositories.Interfaces;
+using EWallet.Application.Services;
+using EWallet.Application.Services.Interfaces;
+using EWallet.Domain.Entities;
+using EWallet.Infrastructure.Authentication;
 using EWallet.Infrastructure.Persistence;
 using EWallet.Infrastructure.Repositories;
 using EWallet.Infrastructure.Seeding;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +45,25 @@ public static class DependencyInjection
         services.AddScoped<ITopUpRequestRepository, TopUpRequestRepository>();
         services.AddScoped<IWalletMutationRepository, WalletMutationRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+        services.AddIdentityCore<Users>(options =>
+        {
+            options.User.RequireUniqueEmail = true;
+
+            options.Password.RequiredLength = 8;
+            options.Password.RequireDigit = true;
+            options.Password.RequireUppercase = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireNonAlphanumeric = true;
+        })
+        .AddRoles<IdentityRole<long>>()
+        .AddEntityFrameworkStores<AppDbContext>()
+        .AddSignInManager()
+        .AddDefaultTokenProviders();
 
         return services;
     }

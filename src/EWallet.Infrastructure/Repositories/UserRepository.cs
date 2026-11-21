@@ -39,7 +39,7 @@ public sealed class UserRepository(AppDbContext context) : IUserRepository
     }
     public async Task<bool> ExistsByPhoneAsync(string phone, CancellationToken cancellationToken, long? excludedUserId = null)
     {
-        return await context.Users.AnyAsync(u => u.Phone == phone && (!excludedUserId.HasValue || u.Id != excludedUserId.Value), cancellationToken);
+        return await context.Users.AnyAsync(u => u.PhoneNumber == phone && (!excludedUserId.HasValue || u.Id != excludedUserId.Value), cancellationToken);
     }
 
 

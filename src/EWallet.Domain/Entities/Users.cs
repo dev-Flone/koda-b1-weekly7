@@ -1,31 +1,37 @@
-
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using EWallet.Domain.Enums;
+using Microsoft.AspNetCore.Identity;
 
 namespace EWallet.Domain.Entities;
 
-public sealed class Users(
-    string userName,
-    string fullName,
-    string email,
-    string phone)
+public sealed class Users : IdentityUser<long>
 {
-    public long Id { get; private set; }
+    private Users() { }
+    public Users(
+        string userName,
+        string fullName,
+        string email,
+        string phone
+    )
+    {
+        UserName = userName;
+        NormalizedUserName = userName.ToUpperInvariant();
 
-    [Required, MaxLength(50)]
-    public string UserName { get; private set; } = userName;
+        FullName = fullName;
+
+        Email = email;
+        NormalizedEmail = email.ToUpperInvariant();
+
+        Phone = phone;
+
+        Status = UserStatus.ACTIVE;
+        CreatedAtUtc = DateTime.UtcNow;
+        SecurityStamp = Guid.NewGuid().ToString();
+    }
 
     [Required, MaxLength(100)]
-    public string FullName { get; private set; } = fullName;
-
-    [Required, EmailAddress, MaxLength(150)]
-    public string Email { get; private set; } = email;
-
-    [Required, MaxLength(20)]
-    public string Phone { get; private set; } = phone;
-
-    [MaxLength(500)]
-    public string? PasswordHash { get; private set; }
+    public string FullName { get; private set; } = string.Empty;
 
     [Required]
     public UserStatus Status { get; private set; } = UserStatus.ACTIVE;
@@ -35,10 +41,19 @@ public sealed class Users(
 
     public DateTime? UpdatedAtUtc { get; private set; }
 
+    [NotMapped]
+    public string Phone
+    {
+        get => PhoneNumber ?? string.Empty;
+        private set => PhoneNumber = value;
+    }
+
     public Wallets Wallets { get; private set; } = null!;
-
     public ICollection<AuditLogs> AuditLogs { get; private set; } = [];
+    public ICollection<RefreshTokens> RefreshTokens { get; private set; } = [];
 
+
+    // Method
     public void Suspend()
     {
         if (Status == UserStatus.SUSPENDED)
@@ -55,9 +70,14 @@ public sealed class Users(
         string phone)
     {
         UserName = username;
+        NormalizedUserName = username.ToUpperInvariant();
+
         FullName = fullname;
+
         Email = email;
-        Phone = phone;
+        NormalizedEmail = email.ToUpperInvariant();
+
+        PhoneNumber = phone;
 
         UpdatedAtUtc = DateTime.UtcNow;
     }

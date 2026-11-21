@@ -1,6 +1,7 @@
 
 using EWallet.Application.Services;
 using EWallet.Application.Services.Interfaces;
+using EWallet.Domain.Entities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EWallet.Application;

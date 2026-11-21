@@ -85,7 +85,7 @@ public static class UserSeedData
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var existingPhones = existingUsers
-            .Select(u => u.Phone)
+            .Select(u => u.PhoneNumber)
             .ToHashSet();
 
         var newUsers = new List<Users>();

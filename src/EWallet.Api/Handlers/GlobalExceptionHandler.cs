@@ -34,6 +34,12 @@ public sealed class GlobalExceptionHandler(
                 exception.Message
             ),
 
+            UnauthorizedAccessException => (
+                StatusCodes.Status401Unauthorized,
+                "Unauthorized",
+                exception.Message
+            ),
+
             InvalidOperationException => (
                 StatusCodes.Status409Conflict,
                 "Conflict",

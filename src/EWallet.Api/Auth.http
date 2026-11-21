@@ -1,0 +1,126 @@
+
+@baseUrl = http://localhost:5224
+
+###############################################################################
+# REGISTER
+###############################################################################
+
+### Register
+# @name register
+POST {{baseUrl}}/api/Auth/register
+Content-Type: application/json
+
+{
+  "userName": "testuser01",
+  "fullName": "Test User",
+  "email": "testuser01@example.com",
+  "phone": "081234567890",
+  "password": "TestWallet#2026"
+}
+
+###############################################################################
+# LOGIN
+###############################################################################
+
+### Login
+# @name login
+POST {{baseUrl}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "email": "kairn@gmail.com",
+  "password": "Admin#0506"
+}
+
+### Login - Invalid Password
+POST {{baseUrl}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser01@example.com",
+  "password": "WrongPassword#2026"
+}
+
+### Register - Duplicate Email
+POST {{baseUrl}}/api/Auth/register
+Content-Type: application/json
+
+{
+  "userName": "testuser02",
+  "fullName": "Test User Two",
+  "email": "kairn@gmail.com",
+  "phone": "081234567891",
+  "password": "TestWallet#2026"
+}
+
+###############################################################################
+# CURRENT USER
+###############################################################################
+
+### Get Current User (ME)
+GET {{baseUrl}}/api/Auth/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###############################################################################
+# REFRESH TOKEN
+###############################################################################
+
+### Refresh Access Token
+# @name refresh
+POST {{baseUrl}}/api/Auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.$.refreshToken}}"
+}
+
+### Get Current User Using Rotated Access Token
+GET {{baseUrl}}/api/Auth/me
+Authorization: Bearer {{refresh.response.body.$.accessToken}}
+
+### Reuse Old Refresh Token (Expected: 401)
+# WARNING: This should revoke the entire token family.
+POST {{baseUrl}}/api/Auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.$.refreshToken}}"
+}
+
+### Try Rotated Token After Reuse Detection (Expected: 401)
+POST {{baseUrl}}/api/Auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh.response.body.$.refreshToken}}"
+}
+
+###############################################################################
+# LOGOUT
+###############################################################################
+
+### Login For Logout Test
+# @name loginForLogout
+POST {{baseUrl}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "email": "kairn@gmail.com",
+  "password": "Admin#0506"
+}
+
+### Logout (Expected: 204)
+POST {{baseUrl}}/api/Auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{loginForLogout.response.body.$.refreshToken}}"
+}
+
+### Try Refresh After Logout (Expected: 401)
+POST {{baseUrl}}/api/Auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{loginForLogout.response.body.$.refreshToken}}"
+}

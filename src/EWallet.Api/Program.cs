@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 using EWallet.Api.Handlers;
 using EWallet.Application;
 using EWallet.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,12 +25,35 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Swagger
-builder.Services.AddSwaggerGen();
+// OpenApi
+builder.Services.AddOpenApi();
 
 // Dependency Injection
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// JWT
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is missing.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings["Issuer"],
+
+        ValidateAudience = true,
+        ValidAudience = jwtSettings["Audience"],
+
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(secretKey)),
+
+        ClockSkew = TimeSpan.Zero
+    };
+});
 
 // Exception Handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -41,14 +67,19 @@ await app.Services.MigrateDbAsync();
 // HTTP Pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+
+    app.MapScalarApiReference(options => options.WithTitle("EWallet API"));
+    app.MapGet("/", () => Results.Redirect("/scalar"));
 }
 
 app.UseCors("ReactFrontend");
 
 app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
