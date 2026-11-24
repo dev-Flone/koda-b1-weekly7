@@ -1,7 +1,10 @@
 
+using System.Security.Claims;
 using EWallet.Application.Dtos.Wallets;
+using EWallet.Application.DTOs.Wallets;
 using EWallet.Application.Services.Interfaces;
 using EWallet.Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EWallet.Api.Controllers;
@@ -127,5 +130,72 @@ public sealed class WalletsController(IWalletService service) : ControllerBase
         }
 
         return Ok(wallet);
+    }
+
+    // ME
+    [HttpGet("me")]
+    [Authorize]
+    [ProducesResponseType(typeof(WalletResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<WalletResponseDto>> GetMyWalletAsync(CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!long.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
+        var wallet = await _service.GetByUserIdAsync(userId, cancellationToken);
+
+        if (wallet is null) return Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            title: "Wallet not found",
+            detail: "Wallet for the authenticated user was not found."
+        );
+
+        return Ok(wallet);
+    }
+
+    [HttpGet("recipient/email/{email}")]
+    [Authorize]
+    [ProducesResponseType(typeof(RecipientWalletResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RecipientWalletResponse>> GetRecipientByEmailAsync([FromRoute] string email, CancellationToken cancellationToken)
+    {
+        var recipient = await _service.GetRecipientByEmailAsync(email, cancellationToken);
+
+        if (recipient is null) return Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            title: "Recipient not found",
+            detail: $"No wallet was found for email {email}"
+        );
+
+        return Ok(recipient);
+    }
+
+    [HttpGet("recipient/number/{walletNumber}")]
+    [Authorize]
+    [ProducesResponseType(typeof(RecipientWalletResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RecipientWalletResponse>> GetRecipientByWalletNumberAsync(
+    [FromRoute] string walletNumber,
+    CancellationToken cancellationToken)
+    {
+        var recipient = await _service.GetRecipientByWalletNumberAsync(
+            walletNumber,
+            cancellationToken
+        );
+
+        if (recipient is null)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Recipient not found",
+                detail: $"No wallet was found for number {walletNumber}."
+            );
+        }
+
+        return Ok(recipient);
     }
 }

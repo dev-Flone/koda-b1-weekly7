@@ -60,6 +60,17 @@ public sealed class TopUpRequestRepository(AppDbContext context) : ITopUpRequest
     {
         context.TopUpRequests.Update(request);
     }
+
+    public async Task<List<TopUpRequests>> GetExpiredPendingAsync(DateTime utcNow, CancellationToken cancellationToken)
+    {
+        return await context.TopUpRequests
+            .Where(tr =>
+                tr.Status == TopUpRequestStatus.PENDING &&
+                tr.ExpiresAtUtc.HasValue &&
+                tr.ExpiresAtUtc.Value <= utcNow)
+            .ToListAsync(cancellationToken);
+
+    }
 }
 
 

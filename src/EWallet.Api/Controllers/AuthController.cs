@@ -8,14 +8,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EWallet.Api.Controllers
 {
-    [AllowAnonymous]
     [ApiController]
     [Route("api/[controller]")]
-    public sealed class AuthController(IAuthService service) : ControllerBase
+    public sealed class AuthController(IAuthService service, IWebHostEnvironment environment) : ControllerBase
     {
         private readonly IAuthService _service = service;
+        private readonly IWebHostEnvironment _environment = environment;
+        private const string RefreshTokenCookie = "refreshToken";
 
         // REGISTER
+        [AllowAnonymous]
         [HttpPost("register")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -24,16 +26,21 @@ namespace EWallet.Api.Controllers
         {
             var response = await _service.RegisterAsync(request, cancellationToken);
 
+            SetRefreshTokenCookie(response);
+
             return StatusCode(StatusCodes.Status201Created, response);
         }
 
         // LOGIN
+        [AllowAnonymous]
         [HttpPost("login")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<AuthResponseDto>> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
         {
             var response = await _service.LoginAsync(request, cancellationToken);
+
+            SetRefreshTokenCookie(response);
 
             return Ok(response);
         }
@@ -43,9 +50,15 @@ namespace EWallet.Api.Controllers
         [AllowAnonymous]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<AuthResponseDto>> RefreshAsync([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult<AuthResponseDto>> RefreshAsync(CancellationToken cancellationToken)
         {
-            var response = await _service.RefreshAsync(request.RefreshToken, cancellationToken);
+            var refreshToken = Request.Cookies[RefreshTokenCookie];
+
+            if (string.IsNullOrWhiteSpace(refreshToken)) return Unauthorized();
+
+            var response = await _service.RefreshAsync(refreshToken, cancellationToken);
+
+            SetRefreshTokenCookie(response);
 
             return Ok(response);
         }
@@ -54,9 +67,13 @@ namespace EWallet.Api.Controllers
         [HttpPost("logout")]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> LogoutAsync([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> LogoutAsync(CancellationToken cancellationToken)
         {
-            await _service.LogoutAsync(request.RefreshToken, cancellationToken);
+            var refreshToken = Request.Cookies[RefreshTokenCookie];
+
+            if (!string.IsNullOrWhiteSpace(refreshToken)) await _service.LogoutAsync(refreshToken, cancellationToken);
+
+            DeleteRefreshTokenCookie();
 
             return NoContent();
         }
@@ -80,6 +97,31 @@ namespace EWallet.Api.Controllers
                 UserId = userId,
                 UserName = userName,
                 Email = email
+            });
+        }
+
+
+        // Helper Methods
+        private void SetRefreshTokenCookie(AuthResponseDto response)
+        {
+            Response.Cookies.Append(RefreshTokenCookie, response.RefreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !_environment.IsDevelopment(),
+                SameSite = SameSiteMode.Lax,
+                Expires = response.RefreshTokenExpiresAtUtc,
+                Path = "/"
+            });
+        }
+
+        private void DeleteRefreshTokenCookie()
+        {
+            Response.Cookies.Delete(RefreshTokenCookie, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !_environment.IsDevelopment(),
+                SameSite = SameSiteMode.Lax,
+                Path = "/"
             });
         }
     }

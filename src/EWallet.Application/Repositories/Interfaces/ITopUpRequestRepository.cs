@@ -11,6 +11,7 @@ public interface ITopUpRequestRepository
     Task<TopUpRequests?> GetByTransactionIdAsync(long transactionId, CancellationToken cancellationToken);
     Task<List<TopUpRequests>> GetByStatus(TopUpRequestStatus status, CancellationToken cancellationToken);
     Task<TopUpRequests?> GetByProviderReferenceAsync(string providerReference, CancellationToken cancellationToken);
+    Task<List<TopUpRequests>> GetExpiredPendingAsync(DateTime utcNow, CancellationToken cancellationToken);
 
     Task AddAsync(TopUpRequests request, CancellationToken cancellationToken);
     void Update(TopUpRequests request);

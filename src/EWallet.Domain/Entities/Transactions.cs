@@ -51,4 +51,13 @@ public sealed class Transactions(
         Status = TransactionStatus.SUCCESS;
         CompletedAtUtc = DateTime.UtcNow;
     }
+
+    public void Expire()
+    {
+        if (Type != TransactionType.TOPUP) throw new InvalidOperationException("Only topup transaction can be expired.");
+
+        if (Status != TransactionStatus.PENDING) throw new InvalidOperationException("Only pending transactions can be expired");
+
+        Status = TransactionStatus.FAILED;
+    }
 }

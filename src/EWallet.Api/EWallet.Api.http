@@ -3,7 +3,7 @@
 
 # Sesuaikan dengan ID wallet yang tersedia di database.
 @userId = 42
-@walletId = 21
+@walletId = 11
 @receiverWalletId = 22
 @topUpId = 31
 @transactionId = 15
@@ -12,6 +12,8 @@
 ###############################################################################
 # USERS
 ###############################################################################
+###
+GET {{baseUrl}}/api/PaymentMethod/active
 
 ### Get all users
 GET {{baseUrl}}/api/Users

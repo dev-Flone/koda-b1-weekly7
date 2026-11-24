@@ -39,9 +39,22 @@ public sealed class TopUpRequests(long transactionId, long walletId, int payment
     // METHODS
     public void Confirmation()
     {
+        var now = DateTime.UtcNow;
+
         if (Status != TopUpRequestStatus.PENDING) throw new InvalidOperationException("Only pending top-up requests can be marked as paid.");
 
+        if (ExpiresAtUtc.HasValue && DateTime.UtcNow >= ExpiresAtUtc.Value) throw new InvalidOperationException("Topup request has expired.");
+
         Status = TopUpRequestStatus.PAID;
-        PaidAtUtc = DateTime.UtcNow;
+        PaidAtUtc = now;
+    }
+
+    public void Expire(DateTime now)
+    {
+        if (Status != TopUpRequestStatus.PENDING) throw new InvalidOperationException("Only pending request can expire.");
+
+        if (!ExpiresAtUtc.HasValue || now < ExpiresAtUtc.Value) throw new InvalidOperationException("Topup request has not expired yet.");
+
+        Status = TopUpRequestStatus.EXPIRED;
     }
 }

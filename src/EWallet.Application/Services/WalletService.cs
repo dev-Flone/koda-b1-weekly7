@@ -1,6 +1,7 @@
 
 using EWallet.Application.Abstractions.Persistence;
 using EWallet.Application.Dtos.Wallets;
+using EWallet.Application.DTOs.Wallets;
 using EWallet.Application.Repositories.Interfaces;
 using EWallet.Application.Services.Interfaces;
 using EWallet.Domain.Entities;
@@ -9,12 +10,14 @@ using EWallet.Domain.Enums;
 namespace EWallet.Application.Services;
 
 public sealed class WalletService(
+    IUserRepository userRepository,
     IUnitOfWork unitOfWork,
     IWalletRepository repository,
     IAuditLogService auditLogService
 ) : IWalletService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IUserRepository _userRepository = userRepository;
 
     public async Task<List<WalletResponseDto>> GetAllAsync(
         CancellationToken cancellationToken)
@@ -119,6 +122,54 @@ public sealed class WalletService(
             Status = wallet.Status.ToString(),
             CreatedAtUtc = wallet.CreatedAtUtc,
             UpdatedAtUtc = wallet.UpdatedAtUtc
+        };
+    }
+
+    public async Task<RecipientWalletResponse?> GetRecipientByEmailAsync(
+    string email,
+    CancellationToken cancellationToken)
+    {
+        var user = await _userRepository.GetByEmailAsync(
+            email,
+            cancellationToken
+        );
+
+        if (user is null) return null;
+
+        var wallet = await repository.GetByUserId(
+            user.Id,
+            cancellationToken
+        );
+
+        if (wallet is null) return null;
+
+        return new RecipientWalletResponse
+        {
+            WalletId = wallet.Id,
+            WalletNumber = wallet.WalletNumber,
+            FullName = user.FullName,
+            Email = user.Email,
+            Status = wallet.Status.ToString()
+        };
+    }
+
+    public async Task<RecipientWalletResponse?> GetRecipientByWalletNumberAsync(string walletNumber, CancellationToken cancellationToken)
+    {
+        var wallet = await repository.GetByWalletNumberAsync(walletNumber, cancellationToken);
+
+        if (wallet is null) return null;
+
+        var user = await _userRepository.GetByIdAsync(wallet.UserId, cancellationToken);
+
+        if (user is null) return null;
+
+        return new RecipientWalletResponse
+        {
+            WalletId = wallet.Id,
+            WalletNumber = wallet.WalletNumber,
+            FullName = user.FullName,
+            Email = user.Email,
+            Status = wallet.Status.ToString()
         };
     }
 }

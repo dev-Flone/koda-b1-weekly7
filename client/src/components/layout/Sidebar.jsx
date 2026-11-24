@@ -1,32 +1,28 @@
+import { NavLink, useNavigate } from "react-router";
+import { useAuth } from "../../context/useAuth";
+
 const menuItems = [
-  {
-    label: "Beranda",
-    icon: "⌂",
-    active: true,
-  },
-  {
-    label: "Isi Saldo",
-    icon: "+",
-  },
-  {
-    label: "Transfer",
-    icon: "↗",
-  },
-  {
-    label: "Aktivitas",
-    icon: "◷",
-  },
-  {
-    label: "Pengaturan",
-    icon: "⚙",
-  },
+  { label: "Beranda", icon: "⌂", path: "/" },
+  { label: "Isi Saldo", icon: "+", path: "/topup" },
+  { label: "Transfer", icon: "↗", path: "/transfer" },
+  { label: "Aktivitas", icon: "◷", path: "/aktivitas" },
+  { label: "Pengaturan", icon: "⚙", path: "/pengaturan" },
 ];
 
 const Sidebar = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/signin", { replace: true });
+  };
+
   return (
     <aside className="sidebar">
       <div className="brand">
         <div className="brand-logo">k</div>
+
         <span className="font-bold text-primary-dark text-[22px]">
           koda{" "}
           <span className="text-primary font-semibold text-[22px]">wallet</span>
@@ -38,24 +34,22 @@ const Sidebar = () => {
 
         <nav className="sidebar-nav">
           {menuItems.map((item) => (
-            <a
-              href="#"
+            <NavLink
+              to={item.path}
               key={item.label}
-              className={`nav-item ${item.active ? "active" : ""}`}
-              aria-current={item.active ? "page" : undefined}
-              onClick={(event) => event.preventDefault()}
+              end={item.path === "/"}
+              className={({ isActive }) =>
+                `nav-item ${isActive ? "active" : ""}`
+              }
             >
+              <span className="nav-icon">{item.icon}</span>
               <span className="nav-label">{item.label}</span>
-            </a>
+            </NavLink>
           ))}
 
-          <a
-            href="#"
-            className="nav-item"
-            onClick={(event) => event.preventDefault()}
-          >
+          <button type="button" className="logout" onClick={handleLogout}>
             <span className="font-semibold text-[14px]">Keluar</span>
-          </a>
+          </button>
         </nav>
       </div>
 

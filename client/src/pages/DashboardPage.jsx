@@ -1,20 +1,18 @@
 import { useEffect, useState } from "react";
 
-import Sidebar from "../components/layout/Sidebar";
-import Header from "../components/layout/Header";
+import { AppLayout } from "../components/AppLayout";
 import WalletBalance from "../features/wallet/WalletBalance";
 import QuickActions from "../features/wallet/QuickActions";
 import RecentTransactions from "../features/transactions/RecentTransactions";
 
-import { getWalletById } from "../services/walletService";
+import { getMyWallet } from "../services/walletService";
 import { getTransactionsByWalletId } from "../services/transactionService";
-import { getUserById } from "../services/userService";
+import { useAuth } from "../context/useAuth";
 
 const DashboardPage = () => {
   // Sementara untuk pengujian, sebelum authentication dibuat.
-  const walletId = 21;
+  const { accessToken, user } = useAuth();
 
-  const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [transactions, setTransactions] = useState([]);
 
@@ -25,20 +23,24 @@ const DashboardPage = () => {
     let isMounted = true;
 
     async function loadDashboard() {
+      if (!accessToken) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
 
-        const [walletData, transactionData] = await Promise.all([
-          getWalletById(walletId),
-          getTransactionsByWalletId(walletId),
-        ]);
+        const walletData = await getMyWallet(accessToken);
 
-        const userData = await getUserById(walletData.userId);
+        const transactionData = await getTransactionsByWalletId(
+          walletData.id,
+          accessToken,
+        );
 
         if (!isMounted) return;
 
-        setUser(userData);
         setWallet(walletData);
         setTransactions(transactionData);
       } catch (err) {
@@ -57,35 +59,34 @@ const DashboardPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [walletId]);
+  }, [accessToken]);
 
   return (
-    <div className="app-layout">
-      <Sidebar />
+    <AppLayout
+      user={user}
+      title="Beranda"
+      eyebrow="Personal Wallet"
+      description={`Selamat datang kembali, ${user?.fullName || "Pengguna"}`}
+    >
+      {loading ? (
+        <p className="text-muted text-xs">Memuat dashboard...</p>
+      ) : error ? (
+        <p className="error-message text-red-600 text-xs font-medium">
+          {error}
+        </p>
+      ) : wallet ? (
+        <>
+          <div className="dashboard-overview">
+            <WalletBalance wallet={wallet} />
+            <QuickActions />
+          </div>
 
-      <main className="main-content">
-        <Header user={user} />
-
-        {loading ? (
-          <p className="text-muted text-xs">Memuat dashboard...</p>
-        ) : error ? (
-          <p className="error-message text-red-600 text-xs font-medium">
-            {error}
-          </p>
-        ) : wallet ? (
-          <>
-            <div className="dashboard-overview">
-              <WalletBalance wallet={wallet} />
-              <QuickActions />
-            </div>
-
-            <RecentTransactions transactions={transactions} />
-          </>
-        ) : (
-          <p className="text-muted text-xs">Data wallet tidak ditemukan.</p>
-        )}
-      </main>
-    </div>
+          <RecentTransactions transactions={transactions} />
+        </>
+      ) : (
+        <p className="text-muted text-xs">Data wallet tidak ditemukan.</p>
+      )}
+    </AppLayout>
   );
 };
 

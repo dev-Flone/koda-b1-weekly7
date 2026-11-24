@@ -1,8 +1,8 @@
-
 using System.Text.Json.Serialization;
 using EWallet.Api.Handlers;
 using EWallet.Application;
 using EWallet.Infrastructure;
+using EWallet.Infrastructure.BackgroundServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -21,7 +21,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -31,6 +32,7 @@ builder.Services.AddOpenApi();
 // Dependency Injection
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHostedService<TopUpExpirationService>();
 
 // JWT
 var jwtSettings = builder.Configuration.GetSection("Jwt");

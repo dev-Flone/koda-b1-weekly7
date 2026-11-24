@@ -9,6 +9,7 @@ public interface ITopUpService
     Task<List<TopUpResponseDto>> GetByWalletIdAsync(long walletId, CancellationToken cancellationToken);
     Task<TopUpResponseDto> CreateAsync(CreateTopUpRequest request, CancellationToken cancellationToken);
     Task<TopUpResponseDto> ConfirmAsync(long id, CancellationToken cancellationToken);
+    Task<int> ExpirePendingAsync(CancellationToken cancellationToken);
 }
 
 

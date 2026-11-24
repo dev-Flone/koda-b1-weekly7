@@ -1,4 +1,9 @@
-const Header = ({ user }) => {
+const Header = ({
+  user,
+  eyebrow = "personal wallet",
+  title = "beranda",
+  description,
+}) => {
   const fullName = user?.fullName || "Pengguna";
 
   const initials = fullName
@@ -11,13 +16,11 @@ const Header = ({ user }) => {
   return (
     <header className="dashboard-header">
       <div className="page-heading">
-        <span className="eyebrow uppercase">personal wallet</span>
-        <h1 className="capitalize">beranda</h1>
-        <p>
-          <span className="capitalize">
-            Selasa, 17 November 2026 • Selamat datang kembali, {fullName}
-          </span>
-        </p>
+        <span className="eyebrow uppercase">{eyebrow}</span>
+
+        <h1 className="capitalize">{title}</h1>
+
+        <p>{description || `Selamat datang kembali, ${fullName}`}</p>
       </div>
 
       <button className="profile-button" type="button">

@@ -61,6 +61,11 @@ Content-Type: application/json
 GET {{baseUrl}}/api/Auth/me
 Authorization: Bearer {{login.response.body.$.accessToken}}
 
+###
+GET {{baseUrl}}/api/Wallets/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+
 ###############################################################################
 # REFRESH TOKEN
 ###############################################################################

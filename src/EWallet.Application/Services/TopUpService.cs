@@ -67,7 +67,8 @@ public sealed class TopUpService(
                 walletId: wallet.Id,
                 paymentMethodId: paymentMethod.Id,
                 amount: request.Amount,
-                status: TopUpRequestStatus.PENDING
+                status: TopUpRequestStatus.PENDING,
+                expiresAtUtc: DateTime.UtcNow.AddMinutes(1)
             );
 
             await topUpRequestRepository.AddAsync(
@@ -106,6 +107,8 @@ public sealed class TopUpService(
 
     public async Task<TopUpResponseDto> ConfirmAsync(long id, CancellationToken cancellationToken)
     {
+        await ExpirePendingAsync(cancellationToken);
+
         await using var dbTransaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
         try
@@ -195,5 +198,43 @@ public sealed class TopUpService(
             ExpiresAtUtc = request.ExpiresAtUtc,
             PaidAtUtc = request.PaidAtUtc
         };
+    }
+
+    public async Task<int> ExpirePendingAsync(CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+
+        var expiredRequest = await topUpRequestRepository.GetExpiredPendingAsync(now, cancellationToken);
+
+        Console.WriteLine($"[EXPIRATION] Current UTC: {now:O}");
+        Console.WriteLine(
+            $"[EXPIRATION] Found requests: {expiredRequest.Count}");
+
+        if (expiredRequest.Count == 0) return 0;
+
+        await using var dbTransaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            foreach (var request in expiredRequest)
+            {
+                var transaction = await transactionRepository.GetByIdAsync(request.TransactionId, cancellationToken) ?? throw new KeyNotFoundException($"Transaction {request.TransactionId} was not found.");
+
+                request.Expire(now);
+
+                transaction.Expire();
+            }
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            await dbTransaction.CommitAsync(cancellationToken);
+
+            return expiredRequest.Count;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

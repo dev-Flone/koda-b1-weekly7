@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 const QuickActions = ({ onTopUp, onTransfer }) => {
   return (
     <section className="quick-actions card">
@@ -7,21 +9,23 @@ const QuickActions = ({ onTopUp, onTransfer }) => {
       </div>
 
       <div className="quick-action-buttons">
-        <button
+        <Link
+          to="/topup"
           className="action-button primary capitalize"
           type="button"
           onClick={onTopUp}
         >
           + Isi Saldo
-        </button>
+        </Link>
 
-        <button
+        <Link
+          to="/transfer"
           className="action-button secondary capitalize"
           type="button"
           onClick={onTransfer}
         >
           ↗ Transfer
-        </button>
+        </Link>
       </div>
     </section>
   );

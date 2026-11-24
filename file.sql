@@ -18,3 +18,17 @@ SELECT   COLUMN_NAME,
 FROM     INFORMATION_SCHEMA.COLUMNS
 WHERE    TABLE_NAME = 'RefreshTokens'
 ORDER BY ORDINAL_POSITION;
+
+SELECT   Id,
+         Status,
+         ExpiresAtUtc,
+         PaidAtUtc
+FROM     TopUpRequests
+ORDER BY Id DESC;
+
+SELECT   Id,
+         Status,
+         ExpiresAtUtc,
+         PaidAtUtc
+FROM     TopUpRequests
+ORDER BY Id DESC;
