@@ -1,5 +1,7 @@
+using System.Globalization;
 using EWallet.Application.Abstractions.Persistence;
 using EWallet.Application.Dtos.Users;
+using EWallet.Application.DTOs.Admin;
 using EWallet.Application.Repositories.Interfaces;
 using EWallet.Application.Services.Interfaces;
 using EWallet.Domain.Entities;
@@ -206,13 +208,45 @@ public sealed class UserService(
         return new UserResponseDto
         {
             Id = user.Id,
-            UserName = user.UserName,
+            UserName = user.UserName!,
             FullName = user.FullName,
-            Email = user.Email,
+            Email = user.Email!,
             Phone = user.Phone,
             Status = user.Status.ToString(),
             CreatedAtUtc = user.CreatedAtUtc,
             UpdatedAtUtc = user.UpdatedAtUtc
         };
+    }
+
+    public async Task<AdminDashboardResponse> GetDashboardAsync(CancellationToken cancellationToken)
+    {
+        var totalUsers = await userRepository.CountCustomerAsync(cancellationToken);
+
+        var activeUsers = await userRepository.CountCustomerByStatuAsync(UserStatus.ACTIVE, cancellationToken);
+
+        var suspendedUsers = await userRepository.CountCustomerByStatuAsync(UserStatus.SUSPENDED, cancellationToken);
+
+        var recentUsers = await userRepository.GetRecentCustomerAsync(5, cancellationToken);
+
+        var recentUserResponse = recentUsers.Select(user => new RecentUser(
+            user.Id,
+            user.UserName ?? string.Empty,
+            user.FullName,
+            user.Email ?? string.Empty,
+            user.Status.ToString(),
+            user.CreatedAtUtc
+        )).ToList();
+
+        return new AdminDashboardResponse(
+            totalUsers,
+            activeUsers,
+            suspendedUsers,
+            recentUserResponse
+        );
+    }
+
+    public async Task<List<AdminUserResponse>> GetCustomerAsync(CancellationToken cancellationToken)
+    {
+        return await userRepository.GetAllCustomerAsync(cancellationToken);
     }
 }

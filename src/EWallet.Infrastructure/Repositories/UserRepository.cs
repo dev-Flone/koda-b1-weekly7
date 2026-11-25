@@ -2,6 +2,9 @@ using EWallet.Infrastructure.Persistence;
 using EWallet.Application.Repositories.Interfaces;
 using EWallet.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using EWallet.Domain.Constants;
+using EWallet.Domain.Enums;
+using EWallet.Application.DTOs.Admin;
 
 namespace EWallet.Infrastructure.Repositories;
 
@@ -60,6 +63,51 @@ public sealed class UserRepository(AppDbContext context) : IUserRepository
         context.Users.Remove(user);
     }
 
+    // ADMIN
+
+    private IQueryable<Users> GetCustomersQuery()
+    {
+        return
+            from user in context.Users.AsNoTracking()
+            join userRole in context.UserRoles
+                on user.Id equals userRole.UserId
+            join role in context.Roles
+                on userRole.RoleId equals role.Id
+            where role.Name == AppRoles.CUSTOMER
+            select user;
+    }
+
+    public async Task<int> CountCustomerAsync(CancellationToken cancellationToken)
+    {
+        return await GetCustomersQuery().CountAsync(cancellationToken);
+    }
+
+    public async Task<int> CountCustomerByStatuAsync(UserStatus status, CancellationToken cancellationToken)
+    {
+        return await GetCustomersQuery().CountAsync(user => user.Status == status, cancellationToken);
+    }
+
+    public async Task<List<Users>> GetRecentCustomerAsync(int count, CancellationToken cancellationToken)
+    {
+        return await GetCustomersQuery().OrderByDescending(user => user.CreatedAtUtc)
+            .Take(count)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<AdminUserResponse>> GetAllCustomerAsync(CancellationToken cancellationToken)
+    {
+        return await GetCustomersQuery()
+            .OrderByDescending(user => user.CreatedAtUtc)
+            .Select(user => new AdminUserResponse(
+                user.Id,
+                user.UserName!,
+                user.FullName,
+                user.Email!,
+                user.Status.ToString(),
+                user.Wallets == null ? 0m : user.Wallets.Balance,
+                user.CreatedAtUtc
+            )).ToListAsync();
+    }
 }
 
 

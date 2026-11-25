@@ -64,7 +64,7 @@
 }
 
 .main-content {
-  @apply flex-1 min-w-0 py-8 px-10 min-[1440px]:py-10 min-[1440px]:px-12;
+  @apply flex-1 min-w-0 w-full py-8 px-10 min-[1440px]:py-10 min-[1440px]:px-12;
 }
 
 /* ========================================

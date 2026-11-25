@@ -76,6 +76,8 @@ public static class DependencyInjection
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         await db.Database.MigrateAsync();
+
+        await IdentitySeedData.SeedAsync(scope.ServiceProvider);
     }
 
     private static void Seed(DbContext context)

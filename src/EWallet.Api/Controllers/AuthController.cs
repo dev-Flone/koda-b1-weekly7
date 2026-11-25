@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using EWallet.Application.DTOs.Admin;
 using EWallet.Application.DTOs.Auth;
 using EWallet.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -92,14 +93,16 @@ namespace EWallet.Api.Controllers
                 claim.Type == JwtRegisteredClaimNames.Email ||
                 claim.Type == ClaimTypes.Email)?.Value;
 
+            var role = User.FindFirstValue(ClaimTypes.Role);
+
             return Ok(new
             {
                 UserId = userId,
                 UserName = userName,
-                Email = email
+                Email = email,
+                Role = role
             });
         }
-
 
         // Helper Methods
         private void SetRefreshTokenCookie(AuthResponseDto response)

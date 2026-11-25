@@ -7,6 +7,13 @@ export function login(credentials) {
   });
 }
 
+export function register(data) {
+  return apiRequest("/Auth/register", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export function refreshAccessToken() {
   return apiRequest("/Auth/refresh", {
     method: "POST",

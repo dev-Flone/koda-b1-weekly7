@@ -3,6 +3,7 @@ import Header from "./layout/Header";
 import { Logo } from "./ui";
 import { Link } from "react-router";
 import { useAuth } from "../context/useAuth";
+import AdminSidebar from "./layout/AdminSidebar";
 
 export function AppLayout({
   user,
@@ -17,10 +18,11 @@ export function AppLayout({
   const { user: authUser } = useAuth();
 
   const currentUser = user || authUser;
+  const isAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
 
   return (
     <div className="app-layout">
-      <Sidebar activeItem={activeItem || title || crumb} />
+      {isAdmin ? <AdminSidebar /> : <Sidebar />}
 
       <main className="main-content">
         <Header

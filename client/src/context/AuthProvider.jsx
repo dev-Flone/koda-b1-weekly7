@@ -7,6 +7,14 @@ import {
 } from "../services/authService";
 import { setAccessTokenGetter, setAccessTokenUpdater } from "../services/api";
 
+const mapUser = (response) => ({
+  userId: response.userId,
+  userName: response.userName,
+  fullName: response.fullName,
+  email: response.email,
+  role: response.role,
+});
+
 const AuthProvider = ({ children }) => {
   const [accessToken, setAccessToken] = useState(null);
   const [user, setUser] = useState(null);
@@ -14,20 +22,17 @@ const AuthProvider = ({ children }) => {
 
   const accessTokenRef = useRef(accessToken);
 
-  // Selalu sinkronkan ref dengan state terbaru
   const updateAccessToken = (token) => {
     accessTokenRef.current = token;
     setAccessToken(token);
   };
 
-  // Hubungkan AuthProvider dengan api.js
   useEffect(() => {
     setAccessTokenGetter(() => accessTokenRef.current);
 
     setAccessTokenUpdater((token) => {
       setAccessToken(token);
 
-      // Jika token null, sesi pengguna juga harus dibersihkan
       if (!token) {
         setUser(null);
       }
@@ -39,16 +44,11 @@ const AuthProvider = ({ children }) => {
       try {
         const response = await refreshAccessToken();
 
-        setAccessToken(response.accessToken);
+        updateAccessToken(response.accessToken);
 
-        setUser({
-          userId: response.userId,
-          userName: response.userName,
-          fullName: response.fullName,
-          email: response.email,
-        });
+        setUser(mapUser(response));
       } catch {
-        setAccessToken(null);
+        updateAccessToken(null);
         setUser(null);
       } finally {
         setIsInitializing(false);
@@ -60,14 +60,9 @@ const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     const response = await loginRequest(credentials);
 
-    setAccessToken(response.accessToken);
+    updateAccessToken(response.accessToken);
 
-    setUser({
-      userId: response.userId,
-      userName: response.userName,
-      fullName: response.fullName,
-      email: response.email,
-    });
+    setUser(mapUser(response));
 
     return response;
   };
@@ -76,7 +71,7 @@ const AuthProvider = ({ children }) => {
     try {
       await logoutRequest();
     } finally {
-      setAccessToken(null);
+      updateAccessToken(null);
       setUser(null);
     }
   };

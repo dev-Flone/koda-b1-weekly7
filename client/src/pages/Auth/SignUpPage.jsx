@@ -1,7 +1,8 @@
 import { useState } from "react";
 import AuthFormField from "../../components/auth/AuthFormField";
 import AuthLayout from "../../components/auth/AuthLayout";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { register } from "../../services/authService";
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -10,8 +11,13 @@ const SignUpPage = () => {
     email: "",
     phone: "",
     password: "",
-    confirmPasword: "",
+    confirmPassword: "",
   });
+
+  const navigate = useNavigate();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,15 +28,37 @@ const SignUpPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPasword) {
-      alert("Password dan confirm password tidak sama");
+    setError("");
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Password dan confirm password tidak sama");
       return;
     }
 
-    console.log("Registration data:", formData);
+    const request = {
+      userName: formData.userName,
+      fullName: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+    };
+
+    try {
+      setIsLoading(true);
+
+      await register(request);
+
+      alert("Registrasi berhasil! Silakan masuk ke akun anda");
+
+      navigate("/signin");
+    } catch (err) {
+      setError(err.message || "Registrasi gagal. Silakan coba lagi nanti");
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <AuthLayout
@@ -114,11 +142,14 @@ const SignUpPage = () => {
             Akun baru akan mendapatkan dompet aktif dengan saldo Rp0.
           </p>
 
+          {error && <p className="col-span-2 text-sm text-red-600">{error}</p>}
+
           <button
             type="submit"
-            className="w-full text-left px-6 bg-primary text-white py-4 rounded-[10px] text-sm font-medium  col-span-2 hover:bg-[#0E5952] transition-colors"
+            disabled={isLoading}
+            className="w-full text-left px-6 bg-primary text-white py-4 rounded-[10px] text-sm font-medium  col-span-2 hover:bg-[#0E5952] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Buat akun
+            {isLoading ? "Mendaftarkan akun..." : "Buat akun"}
           </button>
         </form>
 

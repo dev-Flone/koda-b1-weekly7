@@ -32,14 +32,24 @@ Content-Type: application/json
   "password": "Admin#0506"
 }
 
-### Login - Invalid Password
+###
 POST {{baseUrl}}/api/Auth/login
 Content-Type: application/json
 
 {
-  "email": "testuser01@example.com",
-  "password": "WrongPassword#2026"
+  "email": "admin@ewallet.local",
+  "password": "GantiPasswordKuat123!"
 }
+
+
+###
+GET {{baseUrl}}/api/admin/dashboard
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMiIsImVtYWlsIjoiYWRtaW5AZXdhbGxldC5sb2NhbCIsInVuaXF1ZV9uYW1lIjoiYWRtaW4iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEyIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6ImFkbWluIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQURNSU4iLCJleHAiOjE3OTU1NzkzNTUsImlzcyI6IkVXYWxsZXQuQXBpIiwiYXVkIjoiRVdhbGxldC5DbGllbnQifQ.8Dq7sKTssa1MeFkvodKVuEct-uhtZ-6lGMabVXOWQT8
+Accept: application/json
+
+###
+GET {{baseUrl}}/api/admin/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMiIsImVtYWlsIjoiYWRtaW5AZXdhbGxldC5sb2NhbCIsInVuaXF1ZV9uYW1lIjoiYWRtaW4iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEyIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6ImFkbWluIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQURNSU4iLCJleHAiOjE3OTU1NzkzNTUsImlzcyI6IkVXYWxsZXQuQXBpIiwiYXVkIjoiRVdhbGxldC5DbGllbnQifQ.8Dq7sKTssa1MeFkvodKVuEct-uhtZ-6lGMabVXOWQT8
 
 ### Register - Duplicate Email
 POST {{baseUrl}}/api/Auth/register
@@ -59,10 +69,18 @@ Content-Type: application/json
 
 ### Get Current User (ME)
 GET {{baseUrl}}/api/Auth/me
-Authorization: Bearer {{login.response.body.$.accessToken}}
+Authorization: Bearer {{login.response.body.accessToken}}
 
 ###
 GET {{baseUrl}}/api/Wallets/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
+GET {{baseUrl}}/api/Wallets/recipient/email/kairn@gmail.com
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
+GET {{baseUrl}}/api/Wallets/recipient/number/WLT-21112026-66781433
 Authorization: Bearer {{login.response.body.$.accessToken}}
 
 

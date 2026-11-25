@@ -1,4 +1,6 @@
+using EWallet.Application.DTOs.Admin;
 using EWallet.Domain.Entities;
+using EWallet.Domain.Enums;
 
 namespace EWallet.Application.Repositories.Interfaces;
 
@@ -17,6 +19,13 @@ public interface IUserRepository
     Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken, long? excludedUserId = null);
     Task<bool> ExistsByPhoneAsync(string phone, CancellationToken cancellationToken, long? excludedUserId = null);
 
+    // ADMIN DASHBOARD
+    Task<int> CountCustomerAsync(CancellationToken cancellationToken);
+    Task<int> CountCustomerByStatuAsync(UserStatus status, CancellationToken cancellationToken);
+    Task<List<Users>> GetRecentCustomerAsync(int count, CancellationToken cancellationToken);
+
+    // ADMIN USER
+    Task<List<AdminUserResponse>> GetAllCustomerAsync(CancellationToken cancellationToken);
 }
 
 

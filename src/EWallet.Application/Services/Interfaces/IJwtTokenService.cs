@@ -4,5 +4,5 @@ namespace EWallet.Application.Services.Interfaces;
 
 public interface IJwtTokenService
 {
-    string GenerateToken(Users User);
+    string GenerateToken(Users users, IEnumerable<string> roles);
 }

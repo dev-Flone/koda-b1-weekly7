@@ -81,7 +81,10 @@ const DashboardPage = () => {
             <QuickActions />
           </div>
 
-          <RecentTransactions transactions={transactions} />
+          <RecentTransactions
+            transactions={transactions}
+            walletId={wallet.id}
+          />
         </>
       ) : (
         <p className="text-muted text-xs">Data wallet tidak ditemukan.</p>

@@ -1,7 +1,9 @@
+
 using EWallet.Application.Abstractions.Persistence;
 using EWallet.Application.DTOs.Auth;
 using EWallet.Application.Repositories.Interfaces;
 using EWallet.Application.Services.Interfaces;
+using EWallet.Domain.Constants;
 using EWallet.Domain.Entities;
 using EWallet.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -21,11 +23,15 @@ public class AuthService(
 ) : IAuthService
 {
     private const int TokenLifetimeMinutes = 15;
-    public async Task<AuthResponseDto> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
+
+    public async Task<AuthResponseDto> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
 
-        if (user is null || user.Status != UserStatus.ACTIVE) throw new InvalidOperationException("Invalid email or password");
+        if (user is null || user.Status != UserStatus.ACTIVE)
+            throw new InvalidOperationException("Invalid email or password");
 
         var result = await signInManager.CheckPasswordSignInAsync(
             user,
@@ -33,7 +39,8 @@ public class AuthService(
             lockoutOnFailure: true
         );
 
-        if (!result.Succeeded) throw new InvalidOperationException("Invalid email or password");
+        if (!result.Succeeded)
+            throw new InvalidOperationException("Invalid email or password");
 
         var rawToken = refreshTokenService.GenerateToken();
         var tokenExpiry = refreshTokenService.GetExpiryDate();
@@ -45,26 +52,38 @@ public class AuthService(
             tokenExpiry
         );
 
-        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+        await using var transaction =
+            await unitOfWork.BeginTransactionAsync(cancellationToken);
 
         await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        return CreateAuthResponse(user, rawToken, tokenExpiry);
+        return await CreateAuthResponseAsync(user, rawToken, tokenExpiry);
     }
 
-    public async Task LogoutAsync(string refreshToken, CancellationToken cancellationToken)
+    public async Task LogoutAsync(
+        string refreshToken,
+        CancellationToken cancellationToken)
     {
         var tokenHash = refreshTokenService.HashToken(refreshToken);
 
-        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+        await using var transaction =
+            await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-        var storedToken = await refreshTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
+        var storedToken =
+            await refreshTokenRepository.GetByTokenHashAsync(
+                tokenHash,
+                cancellationToken
+            );
 
         if (storedToken is not null && storedToken.IsActive)
         {
-            var activeTokens = await refreshTokenRepository.GetActiveByFamilyIdAsync(storedToken.FamilyId, cancellationToken);
+            var activeTokens =
+                await refreshTokenRepository.GetActiveByFamilyIdAsync(
+                    storedToken.FamilyId,
+                    cancellationToken
+                );
 
             foreach (var activeToken in activeTokens)
             {
@@ -73,22 +92,36 @@ public class AuthService(
             }
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
-
         }
+
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public async Task<AuthResponseDto> RefreshAsync(string refreshToken, CancellationToken cancellationToken)
+    public async Task<AuthResponseDto> RefreshAsync(
+        string refreshToken,
+        CancellationToken cancellationToken)
     {
         var tokenHash = refreshTokenService.HashToken(refreshToken);
 
-        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+        await using var transaction =
+            await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-        var storedToken = await refreshTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
+        var storedToken =
+            await refreshTokenRepository.GetByTokenHashAsync(
+                tokenHash,
+                cancellationToken
+            );
+
+        if (storedToken is null)
+            throw new UnauthorizedAccessException("Invalid refresh token.");
 
         if (storedToken.IsRevoked)
         {
-            var activeTokens = await refreshTokenRepository.GetActiveByFamilyIdAsync(storedToken.FamilyId, cancellationToken);
+            var activeTokens =
+                await refreshTokenRepository.GetActiveByFamilyIdAsync(
+                    storedToken.FamilyId,
+                    cancellationToken
+                );
 
             foreach (var activeToken in activeTokens)
             {
@@ -97,17 +130,22 @@ public class AuthService(
             }
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
-
             await transaction.CommitAsync(cancellationToken);
 
-            throw new UnauthorizedAccessException("Refresh Token reuse detected. Session revoked");
+            throw new UnauthorizedAccessException(
+                "Refresh Token reuse detected. Session revoked"
+            );
         }
 
-        if (storedToken.IsExpired) throw new UnauthorizedAccessException("Refresh token has expiree.");
+        if (storedToken.IsExpired)
+            throw new UnauthorizedAccessException("Refresh token has expired.");
 
-        var user = await userManager.FindByIdAsync(storedToken.UserId.ToString());
+        var user = await userManager.FindByIdAsync(
+            storedToken.UserId.ToString()
+        );
 
-        if (user is null || user.Status != UserStatus.ACTIVE) throw new UnauthorizedAccessException("User is not authorized");
+        if (user is null || user.Status != UserStatus.ACTIVE)
+            throw new UnauthorizedAccessException("User is not authorized");
 
         var newRawToken = refreshTokenService.GenerateToken();
         var newTokenHash = refreshTokenService.HashToken(newRawToken);
@@ -123,33 +161,57 @@ public class AuthService(
             newTokenExpiry
         );
 
-        await refreshTokenRepository.AddAsync(newRefreshToken, cancellationToken);
+        await refreshTokenRepository.AddAsync(
+            newRefreshToken,
+            cancellationToken
+        );
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        return CreateAuthResponse(user, newRawToken, newTokenExpiry);
+        return await CreateAuthResponseAsync(
+            user,
+            newRawToken,
+            newTokenExpiry
+        );
     }
 
-    public async Task<AuthResponseDto> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
+    public async Task<AuthResponseDto> RegisterAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken)
     {
-        if (await userManager.FindByNameAsync(request.UserName) is not null) throw new InvalidOperationException("Username is already registered.");
+        if (await userManager.FindByNameAsync(request.UserName) is not null)
+            throw new InvalidOperationException("Username is already registered.");
 
-        if (await userManager.FindByEmailAsync(request.Email) is not null) throw new InvalidOperationException("Email is already registered.");
+        if (await userManager.FindByEmailAsync(request.Email) is not null)
+            throw new InvalidOperationException("Email is already registered.");
 
-        if (await userRepository.ExistsByPhoneAsync(request.Phone, cancellationToken)) throw new InvalidOperationException("Phone Number is already registered.");
+        if (await userRepository.ExistsByPhoneAsync(
+            request.Phone,
+            cancellationToken))
+        {
+            throw new InvalidOperationException(
+                "Phone Number is already registered."
+            );
+        }
 
         string walletNumber;
 
         do
         {
             walletNumber = walletNumberGenerator.Generate();
-        } while (await walletRepository.ExistsByWalletNumber(walletNumber, cancellationToken));
+        }
+        while (await walletRepository.ExistsByWalletNumber(
+            walletNumber,
+            cancellationToken
+        ));
 
         var rawToken = refreshTokenService.GenerateToken();
         var tokenExpiry = refreshTokenService.GetExpiryDate();
         var familyId = Guid.NewGuid();
 
-        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+        await using var transaction =
+            await unitOfWork.BeginTransactionAsync(cancellationToken);
 
         try
         {
@@ -160,15 +222,40 @@ public class AuthService(
                 request.Phone
             );
 
-            var result = await userManager.CreateAsync(user, request.Password);
+            var result = await userManager.CreateAsync(
+                user,
+                request.Password
+            );
 
             if (!result.Succeeded)
             {
-                var errors = string.Join("; ", result.Errors.Select(errors => errors.Description));
+                var errors = string.Join(
+                    "; ",
+                    result.Errors.Select(error => error.Description)
+                );
 
                 throw new InvalidOperationException(errors);
             }
 
+            // Setiap akun yang mendaftar mendapatkan role CUSTOMER.
+            var roleResult = await userManager.AddToRoleAsync(
+                user,
+                AppRoles.CUSTOMER
+            );
+
+            if (!roleResult.Succeeded)
+            {
+                var errors = string.Join(
+                    "; ",
+                    roleResult.Errors.Select(error => error.Description)
+                );
+
+                throw new InvalidOperationException(
+                    $"Failed to assign CUSTOMER role: {errors}"
+                );
+            }
+
+            // Wallet otomatis dibuat ketika user berhasil didaftarkan.
             var wallet = new Wallets(
                 user.Id,
                 walletNumber,
@@ -184,13 +271,19 @@ public class AuthService(
                 tokenExpiry
             );
 
-            await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
+            await refreshTokenRepository.AddAsync(
+                refreshToken,
+                cancellationToken
+            );
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
-
             await transaction.CommitAsync(cancellationToken);
 
-            return CreateAuthResponse(user, rawToken, tokenExpiry);
+            return await CreateAuthResponseAsync(
+                user,
+                rawToken,
+                tokenExpiry
+            );
         }
         catch
         {
@@ -199,18 +292,32 @@ public class AuthService(
         }
     }
 
-    // Methods
-    private AuthResponseDto CreateAuthResponse(Users user, string refreshToken, DateTime refreshTokenExpiry)
+    private async Task<AuthResponseDto> CreateAuthResponseAsync(
+        Users user,
+        string refreshToken,
+        DateTime refreshTokenExpiry)
     {
+        var roles = await userManager.GetRolesAsync(user);
+
+        if (roles.Count != 1)
+        {
+            throw new InvalidOperationException(
+                $"User {user.Id} must have exactly one assigned role."
+            );
+        }
+
+        var role = roles.Single();
+
         return new AuthResponseDto(
-            AccessToken: jwtTokenService.GenerateToken(user),
+            AccessToken: jwtTokenService.GenerateToken(user, roles),
             ExpiresAtUtc: DateTime.UtcNow.AddMinutes(TokenLifetimeMinutes),
             RefreshToken: refreshToken,
             RefreshTokenExpiresAtUtc: refreshTokenExpiry,
             UserId: user.Id,
             UserName: user.UserName ?? string.Empty,
             FullName: user.FullName,
-            Email: user.Email ?? string.Empty
+            Email: user.Email ?? string.Empty,
+            Role: role
         );
     }
 }

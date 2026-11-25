@@ -50,7 +50,7 @@ const getTransactionStatus = (status) => {
   }
 };
 
-const RecentTransactions = ({ transactions = [] }) => {
+const RecentTransactions = ({ transactions = [], walletId }) => {
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
 
   return (
@@ -84,9 +84,18 @@ const RecentTransactions = ({ transactions = [] }) => {
               </tr>
             ) : (
               safeTransactions.slice(0, 5).map((transaction) => {
+                const currentWalletId = Number(walletId);
+
+                console.log({
+                  currentWalletId: walletId,
+                  senderWalletId: transaction.senderWalletId,
+                  receiverWalletId: transaction.receiverWalletId,
+                  type: transaction.type,
+                });
+
                 const isIncome =
                   transaction.type?.toUpperCase() === "TOPUP" ||
-                  transaction.receiverWalletId === 21;
+                  Number(transaction.receiverWalletId) === currentWalletId;
 
                 const direction = isIncome ? "income" : "expense";
 

@@ -9,11 +9,11 @@ namespace EWallet.Infrastructure.Authentication;
 
 public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
 {
-    public string GenerateToken(Users User)
+    public string GenerateToken(Users users, IEnumerable<string> roles)
     {
         var jwtSettings = configuration.GetSection("jwt");
 
-        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT Secret Key is missing");
+        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT Secret is missing");
 
         var key = new SymmetricSecurityKey(Convert.FromBase64String(secretKey));
 
@@ -21,12 +21,17 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
 
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, User.Id.ToString()),
-            new(JwtRegisteredClaimNames.Email, User.Email ?? string.Empty),
-            new(JwtRegisteredClaimNames.UniqueName, User.UserName ?? string.Empty),
-            new(ClaimTypes.NameIdentifier, User.Id.ToString()),
-            new(ClaimTypes.Name, User.UserName ?? string.Empty)
+            new(JwtRegisteredClaimNames.Sub, users.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, users.Email ?? string.Empty),
+            new(JwtRegisteredClaimNames.UniqueName, users.UserName ?? string.Empty),
+            new(ClaimTypes.NameIdentifier, users.Id.ToString()),
+            new(ClaimTypes.Name, users.UserName ?? string.Empty)
         };
+
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         var token = new JwtSecurityToken(
             issuer: jwtSettings["Issuer"],
