@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using EWallet.Api.Handlers;
 using EWallet.Application;
 using EWallet.Infrastructure;
@@ -57,6 +58,37 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     };
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("AuthPolicy", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var response = context.HttpContext.Response;
+
+        response.StatusCode = StatusCodes.Status429TooManyRequests;
+        response.ContentType = "application/json";
+
+        await response.WriteAsJsonAsync(new
+        {
+            success = false,
+            message = "Too many requests. Please try again later."
+        }, cancellationToken);
+    };
+});
+
 builder.Services.AddAuthorization();
 
 // Exception Handler
@@ -78,6 +110,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("ReactFrontend");
+
+app.UseRateLimiter();
 
 app.UseExceptionHandler();
 

@@ -6,6 +6,7 @@ using EWallet.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace EWallet.Api.Controllers
 {
@@ -35,6 +36,7 @@ namespace EWallet.Api.Controllers
         // LOGIN
         [AllowAnonymous]
         [HttpPost("login")]
+        [EnableRateLimiting("AuthPolicy")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<AuthResponseDto>> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
